@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SubReader">
+  <meta name="theme-color" content="#1a1d23">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>SubReader</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #1a1d23;
+      --bg-secondary: #22262e;
+      --bg-row-alt: #1e2228;
+      --bg-selected: #1a3a5c;
+      --border: #2a2e36;
+      --text-primary: #d4d8e0;
+      --text-secondary: #8a8f9a;
+      --accent: #4a9eff;
+      --danger: #ff5a5a;
+      --toolbar-bg: #16181e;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      padding: calc(var(--safe-top) + 8px) 16px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .app-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .header-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .header-btn:active {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Column Header */
+    .col-header {
+      display: grid;
+      grid-template-columns: 38px 72px 72px 1fr 44px;
+      align-items: center;
+      padding: 8px 8px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .col-header span:first-child {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Subtitle List */
+    .subtitle-list {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .subtitle-row {
+      display: grid;
+      grid-template-columns: 38px 72px 72px 1fr 44px;
+      align-items: center;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      transition: background 0.15s;
+      min-height: 48px;
+    }
+
+    .subtitle-row:nth-child(odd) {
+      background: var(--bg-row-alt);
+    }
+
+    .subtitle-row.selected {
+      background: var(--bg-selected);
+    }
+
+    .subtitle-row .cb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .subtitle-row .cb input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .time-cell {
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding-right: 4px;
+    }
+
+    .text-cell {
+      color: var(--text-primary);
+      line-height: 1.4;
+      padding-right: 8px;
+      word-break: break-word;
+    }
+
+    .action-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 16px;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .action-btn:active {
+      color: var(--accent);
+    }
+
+    /* Bottom Toolbar */
+    .toolbar {
+      background: var(--toolbar-bg);
+      border-top: 1px solid var(--border);
+      padding: 8px 12px calc(var(--safe-bottom) + 8px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .toolbar-left {
+      display: flex;
+      gap: 16px;
+    }
+
+    .toolbar-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+
+    .toolbar-btn:active {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+    }
+
+    .toolbar-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .load-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .load-btn:active {
+      opacity: 0.8;
+    }
+
+    /* Search overlay */
+    .search-bar {
+      display: none;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .search-bar.visible {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .search-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    .search-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    /* Detail modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px 20px calc(var(--safe-bottom) + 20px);
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .modal-index {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .modal-time {
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .modal-text {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .modal-nav {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-nav button {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .modal-nav button:active {
+      background: var(--border);
+    }
+
+    .modal-nav button:disabled {
+      opacity: 0.3;
+    }
+
+    /* Scrollbar */
+    .subtitle-list::-webkit-scrollbar { width: 3px; }
+    .subtitle-list::-webkit-scrollbar-track { background: transparent; }
+    .subtitle-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Select all checkbox */
+    .select-all-cb {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .highlight {
+      background: rgba(74, 158, 255, 0.25);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-top">
+        <span class="app-title" id="appTitle">SubReader</span>
+        <div class="header-actions">
+          <button class="header-btn" id="btnLoad" title="Load SRT file">📂</button>
+          <button class="header-btn" id="btnSettings" title="Settings">⚙️</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="subtitles">Subtitles</div>
+        <div class="tab" data-tab="reader">Reader</div>
+      </div>
+    </header>
+
+    <div class="search-bar" id="searchBar">
+      <input type="text" id="searchInput" placeholder="Search subtitles…">
+      <span class="search-count" id="searchCount"></span>
+      <button class="search-close" id="searchClose">✕</button>
+    </div>
+
+    <!-- Subtitles Tab -->
+    <div class="col-header" id="colHeader" style="display:none;">
+      <span><input type="checkbox" class="select-all-cb" id="selectAll"></span>
+      <span>Start</span>
+      <span>End</span>
+      <span>Text</span>
+      <span></span>
+    </div>
+    <div class="subtitle-list" id="subtitleList"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📄</div>
+      <div class="empty-title">No Subtitles Loaded</div>
+      <div class="empty-desc">Load an .srt file to view and browse subtitles on your phone.</div>
+      <button class="load-btn" id="btnLoadEmpty">Load SRT File</button>
+    </div>
+
+    <!-- Reader Tab (hidden by default) -->
+    <div id="readerView" style="display:none; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 16px;">
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="toolbar-btn" id="btnSearch" title="Search">🔍</button>
+        <button class="toolbar-btn" id="btnJumpTop" title="Jump to top">⏫</button>
+        <button class="toolbar-btn" id="btnJumpBottom" title="Jump to bottom">⏬</button>
+      </div>
+      <div class="toolbar-info">
+        <span id="selectedCount"></span>
+        <span id="lineCount"></span>
+      </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal" id="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-index" id="modalIndex"></div>
+        <div class="modal-time" id="modalTime"></div>
+        <div class="modal-text" id="modalText"></div>
+        <div class="modal-nav">
+          <button id="modalPrev">← Previous</button>
+          <button id="modalNext">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".srt" style="display:none">
+
+  <script>
+    const state = {
+      subtitles: [],
+      selected: new Set(),
+      searchQuery: '',
+      filteredIndices: null,
+      currentTab: 'subtitles',
+      modalIdx: -1,
+      fileName: ''
+    };
+
+    const $ = id => document.getElementById(id);
+
+    // SRT Parser
+    function parseSRT(text) {
+      const subs = [];
+      const blocks = text.trim().replace(/\r\n/g, '\n').split(/\n\n+/);
+
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        if (lines.length < 2) continue;
+
+        let idx = 0;
+        // Skip numeric index line if present
+        if (/^\d+$/.test(lines[0].trim())) idx = 1;
+
+        const timeLine = lines[idx];
+        if (!timeLine) continue;
+        const timeMatch = timeLine.match(
+          /(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})/
+        );
+        if (!timeMatch) continue;
+
+        const textLines = lines.slice(idx + 1).join('\n').trim();
+        // Strip HTML tags commonly found in SRT
+        const cleanText = textLines.replace(/<[^>]+>/g, '');
+
+        subs.push({
+          start: timeMatch[1].replace(',', '.'),
+          end: timeMatch[2].replace(',', '.'),
+          text: cleanText
+        });
+      }
+      return subs;
+    }
+
+    function formatTime(timeStr) {
+      // "00:01:23.456" -> "00:01,23 456" style from screenshot
+      // Actually let's use a cleaner format: "00:01:23.45"
+      const parts = timeStr.split(':');
+      if (parts.length === 3) {
+        const sec = parts[2]; // "23.456"
+        const secParts = sec.split('.');
+        const ms = (secParts[1] || '000').substring(0, 2);
+        return `${parts[0]}:${parts[1]},${secParts[0]}${ms}`;
+      }
+      return timeStr;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function highlightText(text, query) {
+      if (!query) return escapeHtml(text);
+      const escaped = escapeHtml(text);
+      const qEsc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return escaped.replace(new RegExp(`(${qEsc})`, 'gi'), '<span class="highlight">$1</span>');
+    }
+
+    function render() {
+      const list = $('subtitleList');
+      const subs = state.subtitles;
+
+      if (subs.length === 0) {
+        $('emptyState').style.display = 'flex';
+        $('colHeader').style.display = 'none';
+        list.style.display = 'none';
+        $('lineCount').textContent = '';
+        $('selectedCount').textContent = '';
+        return;
+      }
+
+      $('emptyState').style.display = 'none';
+
+      if (state.currentTab === 'subtitles') {
+        $('colHeader').style.display = 'grid';
+        list.style.display = 'block';
+        $('readerView').style.display = 'none';
+        renderSubtitleRows();
+      } else {
+        $('colHeader').style.display = 'none';
+        list.style.display = 'none';
+        $('readerView').style.display = 'block';
+        renderReader();
+      }
+
+      const selCount = state.selected.size;
+      $('selectedCount').textContent = selCount > 0 ? `${selCount} selected` : '';
+      $('lineCount').textContent = `${subs.length} lines`;
+    }
+
+    function renderSubtitleRows() {
+      const list = $('subtitleList');
+      const subs = state.subtitles;
+      const indices = state.filteredIndices !== null
+        ? state.filteredIndices
+        : subs.map((_, i) => i);
+
+      let html = '';
+      for (const i of indices) {
+        const sub = subs[i];
+        const isSelected = state.selected.has(i);
+        html += `<div class="subtitle-row${isSelected ? ' selected' : ''}" data-idx="${i}">
+          <div class="cb"><input type="checkbox" ${isSelected ? 'checked' : ''} data-check="${i}"></div>
+          <div class="time-cell">${formatTime(sub.start)}</div>
+          <div class="time-cell">${formatTime(sub.end)}</div>
+          <div class="text-cell" data-view="${i}">${highlightText(sub.text, state.searchQuery)}</div>
+          <div class="action-cell"><button class="action-btn" data-view="${i}">▶</button></div>
+        </div>`;
+      }
+      list.innerHTML = html;
+
+      if (state.filteredIndices !== null) {
+        $('searchCount').textContent = `${indices.length} / ${subs.length}`;
+      }
+    }
+
+    function renderReader() {
+      const view = $('readerView');
+      const subs = state.subtitles;
+      let html = '';
+      for (let i = 0; i < subs.length; i++) {
+        const sub = subs[i];
+        html += `<div style="margin-bottom:16px; padding:12px; background:var(--bg-secondary); border-radius:10px; cursor:pointer;" data-reader="${i}">
+          <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px; font-family:monospace;">
+            ${formatTime(sub.start)} → ${formatTime(sub.end)}
+          </div>
+          <div style="font-size:16px; line-height:1.5; color:var(--text-primary);">${escapeHtml(sub.text)}</div>
+        </div>`;
+      }
+      view.innerHTML = html;
+    }
+
+    function openModal(idx) {
+      state.modalIdx = idx;
+      const sub = state.subtitles[idx];
+      if (!sub) return;
+      $('modalIndex').textContent = `Subtitle ${idx + 1} of ${state.subtitles.length}`;
+      $('modalTime').textContent = `${sub.start} → ${sub.end}`;
+      $('modalText').textContent = sub.text;
+      $('modalPrev').disabled = idx === 0;
+      $('modalNext').disabled = idx === state.subtitles.length - 1;
+      $('modalOverlay').classList.add('visible');
+    }
+
+    function closeModal() {
+      $('modalOverlay').classList.remove('visible');
+      state.modalIdx = -1;
+    }
+
+    function doSearch(query) {
+      state.searchQuery = query;
+      if (!query) {
+        state.filteredIndices = null;
+        $('searchCount').textContent = '';
+      } else {
+        const lower = query.toLowerCase();
+        state.filteredIndices = [];
+        state.subtitles.forEach((sub, i) => {
+          if (sub.text.toLowerCase().includes(lower)) {
+            state.filteredIndices.push(i);
+          }
+        });
+      }
+      render();
+    }
+
+    // File loading
+    function loadFile() {
+      $('fileInput').click();
+    }
+
+    $('fileInput').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      state.fileName = file.name;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        state.subtitles = parseSRT(ev.target.result);
+        state.selected.clear();
+        state.searchQuery = '';
+        state.filteredIndices = null;
+        $('searchInput').value = '';
+        $('appTitle').textContent = file.name.replace('.srt', '');
+        render();
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    $('btnLoad').addEventListener('click', loadFile);
+    $('btnLoadEmpty').addEventListener('click', loadFile);
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.currentTab = tab.dataset.tab;
+        render();
+      });
+    });
+
+    // Subtitle list interactions (delegated)
+    $('subtitleList').addEventListener('click', e => {
+      const checkEl = e.target.closest('[data-check]');
+      if (checkEl) {
+        const idx = parseInt(checkEl.dataset.check);
+        if (state.selected.has(idx)) state.selected.delete(idx);
+        else state.selected.add(idx);
+        render();
+        return;
+      }
+      const viewEl = e.target.closest('[data-view]');
+      if (viewEl) {
+        openModal(parseInt(viewEl.dataset.view));
+        return;
+      }
+    });
+
+    // Reader view click
+    $('readerView').addEventListener('click', e => {
+      const el = e.target.closest('[data-reader]');
+      if (el) openModal(parseInt(el.dataset.reader));
+    });
+
+    // Select all
+    $('selectAll').addEventListener('change', e => {
+      if (e.target.checked) {
+        const indices = state.filteredIndices !== null
+          ? state.filteredIndices
+          : state.subtitles.map((_, i) => i);
+        indices.forEach(i => state.selected.add(i));
+      } else {
+        state.selected.clear();
+      }
+      render();
+    });
+
+    // Search
+    $('btnSearch').addEventListener('click', () => {
+      const bar = $('searchBar');
+      bar.classList.toggle('visible');
+      if (bar.classList.contains('visible')) {
+        $('searchInput').focus();
+      } else {
+        $('searchInput').value = '';
+        doSearch('');
+      }
+    });
+
+    $('searchClose').addEventListener('click', () => {
+      $('searchBar').classList.remove('visible');
+      $('searchInput').value = '';
+      doSearch('');
+    });
+
+    $('searchInput').addEventListener('input', e => {
+      doSearch(e.target.value);
+    });
+
+    // Toolbar nav
+    $('btnJumpTop').addEventListener('click', () => {
+      $('subtitleList').scrollTop = 0;
+      $('readerView').scrollTop = 0;
+    });
+
+    $('btnJumpBottom').addEventListener('click', () => {
+      $('subtitleList').scrollTop = $('subtitleList').scrollHeight;
+      $('readerView').scrollTop = $('readerView').scrollHeight;
+    });
+
+    // Modal
+    $('modalOverlay').addEventListener('click', e => {
+      if (e.target === $('modalOverlay')) closeModal();
+    });
+
+    $('modalPrev').addEventListener('click', () => {
+      if (state.modalIdx > 0) openModal(state.modalIdx - 1);
+    });
+
+    $('modalNext').addEventListener('click', () => {
+      if (state.modalIdx < state.subtitles.length - 1) openModal(state.modalIdx + 1);
+    });
+
+    // Swipe gestures in modal
+    let touchStartX = 0;
+    $('modal').addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    $('modal').addEventListener('touchend', e => {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diff) > 60) {
+        if (diff > 0 && state.modalIdx > 0) openModal(state.modalIdx - 1);
+        else if (diff < 0 && state.modalIdx < state.subtitles.length - 1) openModal(state.modalIdx + 1);
+      }
+    }, { passive: true });
+
+    // Keyboard navigation in modal
+    document.addEventListener('keydown', e => {
+      if (state.modalIdx < 0) return;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (state.modalIdx > 0) openModal(state.modalIdx - 1);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (state.modalIdx < state.subtitles.length - 1) openModal(state.modalIdx + 1);
+      } else if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    render();
+  </script>
+</body>
+</html>
