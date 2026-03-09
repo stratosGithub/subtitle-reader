@@ -18,10 +18,12 @@
       --bg-secondary: #22262e;
       --bg-row-alt: #1e2228;
       --bg-selected: #1a3a5c;
+      --bg-active: #1c2e1c;
       --border: #2a2e36;
       --text-primary: #d4d8e0;
       --text-secondary: #8a8f9a;
       --accent: #4a9eff;
+      --accent-green: #4adf7a;
       --danger: #ff5a5a;
       --toolbar-bg: #16181e;
       --safe-top: env(safe-area-inset-top, 0px);
@@ -82,9 +84,7 @@
       transition: background 0.15s;
     }
 
-    .header-btn:active {
-      background: rgba(255,255,255,0.08);
-    }
+    .header-btn:active { background: rgba(255,255,255,0.08); }
 
     .tabs {
       display: flex;
@@ -106,6 +106,137 @@
     .tab.active {
       color: var(--accent);
       border-bottom-color: var(--accent);
+    }
+
+    /* Playback Bar */
+    .playback-bar {
+      display: none;
+      background: var(--toolbar-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px 8px;
+      flex-shrink: 0;
+    }
+
+    .playback-bar.visible { display: block; }
+
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .play-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .play-btn.playing {
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      background: rgba(74, 223, 122, 0.1);
+    }
+
+    .play-btn:active { opacity: 0.7; }
+
+    .skip-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 16px;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .skip-btn:active { color: var(--text-primary); }
+
+    .playback-time {
+      flex: 1;
+      text-align: center;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .playback-time .current { color: var(--accent); }
+    .playback-time .total { color: var(--text-secondary); }
+
+    .speed-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .speed-btn:active { color: var(--text-primary); }
+
+    .scrubber-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scrubber-track {
+      flex: 1;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      touch-action: none;
+    }
+
+    .scrubber-bg {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scrubber-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .scrubber-thumb {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      transition: left 0.1s linear;
+    }
+
+    .scrubber-track.dragging .scrubber-fill,
+    .scrubber-track.dragging .scrubber-thumb {
+      transition: none;
     }
 
     /* Column Header */
@@ -145,16 +276,25 @@
       padding: 10px 8px;
       border-bottom: 1px solid var(--border);
       font-size: 13px;
-      transition: background 0.15s;
+      transition: background 0.2s;
       min-height: 48px;
     }
 
-    .subtitle-row:nth-child(odd) {
-      background: var(--bg-row-alt);
+    .subtitle-row:nth-child(odd) { background: var(--bg-row-alt); }
+    .subtitle-row.selected { background: var(--bg-selected); }
+
+    .subtitle-row.active {
+      background: var(--bg-active);
+      border-left: 3px solid var(--accent-green);
     }
 
-    .subtitle-row.selected {
-      background: var(--bg-selected);
+    .subtitle-row.active .text-cell {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .subtitle-row.active .time-cell {
+      color: var(--accent-green);
     }
 
     .subtitle-row .cb {
@@ -175,6 +315,7 @@
       font-size: 11px;
       color: var(--text-secondary);
       padding-right: 4px;
+      cursor: pointer;
     }
 
     .text-cell {
@@ -201,9 +342,7 @@
       transition: color 0.15s;
     }
 
-    .action-btn:active {
-      color: var(--accent);
-    }
+    .action-btn:active { color: var(--accent); }
 
     /* Bottom Toolbar */
     .toolbar {
@@ -256,25 +395,9 @@
       text-align: center;
     }
 
-    .empty-icon {
-      font-size: 56px;
-      margin-bottom: 16px;
-      opacity: 0.4;
-    }
-
-    .empty-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text-primary);
-    }
-
-    .empty-desc {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
+    .empty-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+    .empty-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
 
     .load-btn {
       background: var(--accent);
@@ -288,9 +411,7 @@
       transition: opacity 0.15s;
     }
 
-    .load-btn:active {
-      opacity: 0.8;
-    }
+    .load-btn:active { opacity: 0.8; }
 
     /* Search overlay */
     .search-bar {
@@ -318,13 +439,8 @@
       outline: none;
     }
 
-    .search-bar input:focus {
-      border-color: var(--accent);
-    }
-
-    .search-bar input::placeholder {
-      color: var(--text-secondary);
-    }
+    .search-bar input:focus { border-color: var(--accent); }
+    .search-bar input::placeholder { color: var(--text-secondary); }
 
     .search-close {
       background: none;
@@ -352,9 +468,7 @@
       justify-content: center;
     }
 
-    .modal-overlay.visible {
-      display: flex;
-    }
+    .modal-overlay.visible { display: flex; }
 
     .modal {
       background: var(--bg-secondary);
@@ -378,11 +492,7 @@
       margin: 0 auto 16px;
     }
 
-    .modal-index {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
+    .modal-index { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
 
     .modal-time {
       font-family: 'SF Mono', 'Menlo', monospace;
@@ -415,12 +525,45 @@
       cursor: pointer;
     }
 
-    .modal-nav button:active {
-      background: var(--border);
+    .modal-nav button:active { background: var(--border); }
+    .modal-nav button:disabled { opacity: 0.3; }
+
+    /* Reader view cards */
+    .reader-card {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
     }
 
-    .modal-nav button:disabled {
-      opacity: 0.3;
+    .reader-card.active {
+      background: var(--bg-active);
+      border-left-color: var(--accent-green);
+    }
+
+    .reader-card.active .reader-text {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .reader-card.active .reader-time {
+      color: var(--accent-green);
+    }
+
+    .reader-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+    }
+
+    .reader-text {
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-primary);
     }
 
     /* Scrollbar */
@@ -428,7 +571,6 @@
     .subtitle-list::-webkit-scrollbar-track { background: transparent; }
     .subtitle-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* Select all checkbox */
     .select-all-cb {
       width: 18px;
       height: 18px;
@@ -458,6 +600,28 @@
       </div>
     </header>
 
+    <!-- Playback Bar -->
+    <div class="playback-bar" id="playbackBar">
+      <div class="playback-controls">
+        <button class="skip-btn" id="btnSkipBack" title="Back 10s">⏪ 10s</button>
+        <button class="play-btn" id="btnPlay" title="Play/Pause">▶</button>
+        <button class="skip-btn" id="btnSkipFwd" title="Forward 10s">10s ⏩</button>
+        <div class="playback-time">
+          <span class="current" id="timeCurrent">00:00:00</span>
+          <span class="total"> / <span id="timeTotal">00:00:00</span></span>
+        </div>
+        <button class="speed-btn" id="btnSpeed" title="Playback speed">1.0×</button>
+      </div>
+      <div class="scrubber-row">
+        <div class="scrubber-track" id="scrubberTrack">
+          <div class="scrubber-bg">
+            <div class="scrubber-fill" id="scrubberFill"></div>
+          </div>
+          <div class="scrubber-thumb" id="scrubberThumb"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="search-bar" id="searchBar">
       <input type="text" id="searchInput" placeholder="Search subtitles…">
       <span class="search-count" id="searchCount"></span>
@@ -482,9 +646,8 @@
       <button class="load-btn" id="btnLoadEmpty">Load SRT File</button>
     </div>
 
-    <!-- Reader Tab (hidden by default) -->
-    <div id="readerView" style="display:none; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 16px;">
-    </div>
+    <!-- Reader Tab -->
+    <div id="readerView" style="display:none; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 16px;"></div>
 
     <div class="toolbar">
       <div class="toolbar-left">
@@ -523,56 +686,82 @@
       filteredIndices: null,
       currentTab: 'subtitles',
       modalIdx: -1,
-      fileName: ''
+      fileName: '',
+      // Playback
+      playing: false,
+      currentTime: 0,
+      totalDuration: 0,
+      playbackSpeed: 1.0,
+      activeSubIdx: -1,
+      lastFrameTime: 0,
+      animFrameId: null
     };
 
+    const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
     const $ = id => document.getElementById(id);
 
-    // SRT Parser
-    function parseSRT(text) {
-      const subs = [];
-      const blocks = text.trim().replace(/\r\n/g, '\n').split(/\n\n+/);
+    // ── Time Utilities ──
 
-      for (const block of blocks) {
-        const lines = block.split('\n');
-        if (lines.length < 2) continue;
+    function timeToSeconds(timeStr) {
+      const parts = timeStr.split(':');
+      if (parts.length !== 3) return 0;
+      const h = parseFloat(parts[0]);
+      const m = parseFloat(parts[1]);
+      const s = parseFloat(parts[2]);
+      return h * 3600 + m * 60 + s;
+    }
 
-        let idx = 0;
-        // Skip numeric index line if present
-        if (/^\d+$/.test(lines[0].trim())) idx = 1;
-
-        const timeLine = lines[idx];
-        if (!timeLine) continue;
-        const timeMatch = timeLine.match(
-          /(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})/
-        );
-        if (!timeMatch) continue;
-
-        const textLines = lines.slice(idx + 1).join('\n').trim();
-        // Strip HTML tags commonly found in SRT
-        const cleanText = textLines.replace(/<[^>]+>/g, '');
-
-        subs.push({
-          start: timeMatch[1].replace(',', '.'),
-          end: timeMatch[2].replace(',', '.'),
-          text: cleanText
-        });
-      }
-      return subs;
+    function secondsToTime(sec) {
+      sec = Math.max(0, sec);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
     function formatTime(timeStr) {
-      // "00:01:23.456" -> "00:01,23 456" style from screenshot
-      // Actually let's use a cleaner format: "00:01:23.45"
       const parts = timeStr.split(':');
       if (parts.length === 3) {
-        const sec = parts[2]; // "23.456"
+        const sec = parts[2];
         const secParts = sec.split('.');
         const ms = (secParts[1] || '000').substring(0, 2);
         return `${parts[0]}:${parts[1]},${secParts[0]}${ms}`;
       }
       return timeStr;
     }
+
+    // ── SRT Parser ──
+
+    function parseSRT(text) {
+      const subs = [];
+      const blocks = text.trim().replace(/\r\n/g, '\n').split(/\n\n+/);
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        if (lines.length < 2) continue;
+        let idx = 0;
+        if (/^\d+$/.test(lines[0].trim())) idx = 1;
+        const timeLine = lines[idx];
+        if (!timeLine) continue;
+        const timeMatch = timeLine.match(
+          /(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{2,3})/
+        );
+        if (!timeMatch) continue;
+        const textLines = lines.slice(idx + 1).join('\n').trim();
+        const cleanText = textLines.replace(/<[^>]+>/g, '');
+        const start = timeMatch[1].replace(',', '.');
+        const end = timeMatch[2].replace(',', '.');
+        subs.push({
+          start,
+          end,
+          text: cleanText,
+          startSec: timeToSeconds(start),
+          endSec: timeToSeconds(end)
+        });
+      }
+      return subs;
+    }
+
+    // ── Helpers ──
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -587,6 +776,126 @@
       return escaped.replace(new RegExp(`(${qEsc})`, 'gi'), '<span class="highlight">$1</span>');
     }
 
+    // ── Playback Engine ──
+
+    function findActiveSubtitle(time) {
+      for (let i = 0; i < state.subtitles.length; i++) {
+        const sub = state.subtitles[i];
+        if (time >= sub.startSec && time <= sub.endSec) return i;
+      }
+      // Between subtitles: find the next upcoming one and show the previous
+      for (let i = 0; i < state.subtitles.length; i++) {
+        if (state.subtitles[i].startSec > time) return i > 0 ? i - 1 : -1;
+      }
+      return state.subtitles.length > 0 ? state.subtitles.length - 1 : -1;
+    }
+
+    function playbackTick(timestamp) {
+      if (!state.playing) return;
+      if (state.lastFrameTime === 0) state.lastFrameTime = timestamp;
+
+      const delta = (timestamp - state.lastFrameTime) / 1000;
+      state.lastFrameTime = timestamp;
+      state.currentTime += delta * state.playbackSpeed;
+
+      if (state.currentTime >= state.totalDuration) {
+        state.currentTime = state.totalDuration;
+        pausePlayback();
+        updatePlaybackUI();
+        return;
+      }
+
+      updatePlaybackUI();
+      state.animFrameId = requestAnimationFrame(playbackTick);
+    }
+
+    function startPlayback() {
+      if (state.subtitles.length === 0) return;
+      state.playing = true;
+      state.lastFrameTime = 0;
+      $('btnPlay').textContent = '⏸';
+      $('btnPlay').classList.add('playing');
+      state.animFrameId = requestAnimationFrame(playbackTick);
+    }
+
+    function pausePlayback() {
+      state.playing = false;
+      $('btnPlay').textContent = '▶';
+      $('btnPlay').classList.remove('playing');
+      if (state.animFrameId) {
+        cancelAnimationFrame(state.animFrameId);
+        state.animFrameId = null;
+      }
+    }
+
+    function togglePlayback() {
+      if (state.playing) pausePlayback();
+      else startPlayback();
+    }
+
+    function seekTo(time) {
+      state.currentTime = Math.max(0, Math.min(time, state.totalDuration));
+      state.lastFrameTime = 0;
+      updatePlaybackUI();
+    }
+
+    function updatePlaybackUI() {
+      const t = state.currentTime;
+      const pct = state.totalDuration > 0 ? (t / state.totalDuration) * 100 : 0;
+
+      $('timeCurrent').textContent = secondsToTime(t);
+      $('scrubberFill').style.width = pct + '%';
+      $('scrubberThumb').style.left = pct + '%';
+
+      const newActive = findActiveSubtitle(t);
+      if (newActive !== state.activeSubIdx) {
+        state.activeSubIdx = newActive;
+        updateActiveHighlight();
+      }
+    }
+
+    function updateActiveHighlight() {
+      const idx = state.activeSubIdx;
+
+      if (state.currentTab === 'subtitles') {
+        const list = $('subtitleList');
+        const prevActive = list.querySelector('.subtitle-row.active');
+        if (prevActive) prevActive.classList.remove('active');
+
+        if (idx >= 0) {
+          const row = list.querySelector(`.subtitle-row[data-idx="${idx}"]`);
+          if (row) {
+            row.classList.add('active');
+            scrollToCenter(row, list);
+          }
+        }
+      } else {
+        const view = $('readerView');
+        const prevActive = view.querySelector('.reader-card.active');
+        if (prevActive) prevActive.classList.remove('active');
+
+        if (idx >= 0) {
+          const card = view.querySelector(`.reader-card[data-reader="${idx}"]`);
+          if (card) {
+            card.classList.add('active');
+            scrollToCenter(card, view);
+          }
+        }
+      }
+    }
+
+    function scrollToCenter(el, container) {
+      if (!state.playing) return;
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const elCenter = elRect.top + elRect.height / 2;
+      const containerCenter = containerRect.top + containerRect.height / 2;
+      const offset = elCenter - containerCenter;
+      container.scrollBy({ top: offset, behavior: 'smooth' });
+    }
+
+    // ── Rendering ──
+
     function render() {
       const list = $('subtitleList');
       const subs = state.subtitles;
@@ -595,12 +904,14 @@
         $('emptyState').style.display = 'flex';
         $('colHeader').style.display = 'none';
         list.style.display = 'none';
+        $('playbackBar').classList.remove('visible');
         $('lineCount').textContent = '';
         $('selectedCount').textContent = '';
         return;
       }
 
       $('emptyState').style.display = 'none';
+      $('playbackBar').classList.add('visible');
 
       if (state.currentTab === 'subtitles') {
         $('colHeader').style.display = 'grid';
@@ -630,10 +941,15 @@
       for (const i of indices) {
         const sub = subs[i];
         const isSelected = state.selected.has(i);
-        html += `<div class="subtitle-row${isSelected ? ' selected' : ''}" data-idx="${i}">
+        const isActive = i === state.activeSubIdx;
+        const classes = ['subtitle-row'];
+        if (isSelected) classes.push('selected');
+        if (isActive) classes.push('active');
+
+        html += `<div class="${classes.join(' ')}" data-idx="${i}">
           <div class="cb"><input type="checkbox" ${isSelected ? 'checked' : ''} data-check="${i}"></div>
-          <div class="time-cell">${formatTime(sub.start)}</div>
-          <div class="time-cell">${formatTime(sub.end)}</div>
+          <div class="time-cell" data-seek="${i}">${formatTime(sub.start)}</div>
+          <div class="time-cell" data-seek="${i}">${formatTime(sub.end)}</div>
           <div class="text-cell" data-view="${i}">${highlightText(sub.text, state.searchQuery)}</div>
           <div class="action-cell"><button class="action-btn" data-view="${i}">▶</button></div>
         </div>`;
@@ -651,11 +967,10 @@
       let html = '';
       for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
-        html += `<div style="margin-bottom:16px; padding:12px; background:var(--bg-secondary); border-radius:10px; cursor:pointer;" data-reader="${i}">
-          <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px; font-family:monospace;">
-            ${formatTime(sub.start)} → ${formatTime(sub.end)}
-          </div>
-          <div style="font-size:16px; line-height:1.5; color:var(--text-primary);">${escapeHtml(sub.text)}</div>
+        const isActive = i === state.activeSubIdx;
+        html += `<div class="reader-card${isActive ? ' active' : ''}" data-reader="${i}">
+          <div class="reader-time">${formatTime(sub.start)} → ${formatTime(sub.end)}</div>
+          <div class="reader-text">${escapeHtml(sub.text)}</div>
         </div>`;
       }
       view.innerHTML = html;
@@ -695,10 +1010,9 @@
       render();
     }
 
-    // File loading
-    function loadFile() {
-      $('fileInput').click();
-    }
+    // ── File Loading ──
+
+    function loadFile() { $('fileInput').click(); }
 
     $('fileInput').addEventListener('change', e => {
       const file = e.target.files[0];
@@ -706,12 +1020,24 @@
       state.fileName = file.name;
       const reader = new FileReader();
       reader.onload = ev => {
+        pausePlayback();
         state.subtitles = parseSRT(ev.target.result);
         state.selected.clear();
         state.searchQuery = '';
         state.filteredIndices = null;
+        state.currentTime = 0;
+        state.activeSubIdx = -1;
+
+        const last = state.subtitles[state.subtitles.length - 1];
+        state.totalDuration = last ? last.endSec : 0;
+
         $('searchInput').value = '';
         $('appTitle').textContent = file.name.replace('.srt', '');
+        $('timeTotal').textContent = secondsToTime(state.totalDuration);
+        $('timeCurrent').textContent = '00:00:00';
+        $('scrubberFill').style.width = '0%';
+        $('scrubberThumb').style.left = '0%';
+
         render();
       };
       reader.readAsText(file);
@@ -721,7 +1047,56 @@
     $('btnLoad').addEventListener('click', loadFile);
     $('btnLoadEmpty').addEventListener('click', loadFile);
 
-    // Tabs
+    // ── Playback Controls ──
+
+    $('btnPlay').addEventListener('click', togglePlayback);
+
+    $('btnSkipBack').addEventListener('click', () => seekTo(state.currentTime - 10));
+    $('btnSkipFwd').addEventListener('click', () => seekTo(state.currentTime + 10));
+
+    $('btnSpeed').addEventListener('click', () => {
+      const curIdx = SPEEDS.indexOf(state.playbackSpeed);
+      const nextIdx = (curIdx + 1) % SPEEDS.length;
+      state.playbackSpeed = SPEEDS[nextIdx];
+      $('btnSpeed').textContent = state.playbackSpeed.toFixed(1) + '×';
+    });
+
+    // ── Scrubber drag ──
+
+    const scrubberTrack = $('scrubberTrack');
+    let isDragging = false;
+
+    function scrubFromEvent(e) {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      seekTo(pct * state.totalDuration);
+    }
+
+    scrubberTrack.addEventListener('mousedown', e => {
+      isDragging = true;
+      scrubberTrack.classList.add('dragging');
+      scrubFromEvent(e);
+    });
+
+    scrubberTrack.addEventListener('touchstart', e => {
+      isDragging = true;
+      scrubberTrack.classList.add('dragging');
+      scrubFromEvent(e);
+    }, { passive: true });
+
+    document.addEventListener('mousemove', e => { if (isDragging) scrubFromEvent(e); });
+    document.addEventListener('touchmove', e => { if (isDragging) scrubFromEvent(e); }, { passive: true });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) { isDragging = false; scrubberTrack.classList.remove('dragging'); }
+    });
+    document.addEventListener('touchend', () => {
+      if (isDragging) { isDragging = false; scrubberTrack.classList.remove('dragging'); }
+    });
+
+    // ── Tabs ──
+
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -731,7 +1106,8 @@
       });
     });
 
-    // Subtitle list interactions (delegated)
+    // ── Subtitle list interactions (delegated) ──
+
     $('subtitleList').addEventListener('click', e => {
       const checkEl = e.target.closest('[data-check]');
       if (checkEl) {
@@ -741,6 +1117,13 @@
         render();
         return;
       }
+      const seekEl = e.target.closest('[data-seek]');
+      if (seekEl) {
+        const idx = parseInt(seekEl.dataset.seek);
+        const sub = state.subtitles[idx];
+        if (sub) seekTo(sub.startSec);
+        return;
+      }
       const viewEl = e.target.closest('[data-view]');
       if (viewEl) {
         openModal(parseInt(viewEl.dataset.view));
@@ -748,13 +1131,17 @@
       }
     });
 
-    // Reader view click
     $('readerView').addEventListener('click', e => {
       const el = e.target.closest('[data-reader]');
-      if (el) openModal(parseInt(el.dataset.reader));
+      if (el) {
+        const idx = parseInt(el.dataset.reader);
+        const sub = state.subtitles[idx];
+        if (sub) seekTo(sub.startSec);
+      }
     });
 
-    // Select all
+    // ── Select all ──
+
     $('selectAll').addEventListener('change', e => {
       if (e.target.checked) {
         const indices = state.filteredIndices !== null
@@ -767,7 +1154,8 @@
       render();
     });
 
-    // Search
+    // ── Search ──
+
     $('btnSearch').addEventListener('click', () => {
       const bar = $('searchBar');
       bar.classList.toggle('visible');
@@ -785,11 +1173,10 @@
       doSearch('');
     });
 
-    $('searchInput').addEventListener('input', e => {
-      doSearch(e.target.value);
-    });
+    $('searchInput').addEventListener('input', e => doSearch(e.target.value));
 
-    // Toolbar nav
+    // ── Toolbar nav ──
+
     $('btnJumpTop').addEventListener('click', () => {
       $('subtitleList').scrollTop = 0;
       $('readerView').scrollTop = 0;
@@ -800,7 +1187,8 @@
       $('readerView').scrollTop = $('readerView').scrollHeight;
     });
 
-    // Modal
+    // ── Modal ──
+
     $('modalOverlay').addEventListener('click', e => {
       if (e.target === $('modalOverlay')) closeModal();
     });
@@ -813,7 +1201,6 @@
       if (state.modalIdx < state.subtitles.length - 1) openModal(state.modalIdx + 1);
     });
 
-    // Swipe gestures in modal
     let touchStartX = 0;
     $('modal').addEventListener('touchstart', e => {
       touchStartX = e.touches[0].clientX;
@@ -827,8 +1214,12 @@
       }
     }, { passive: true });
 
-    // Keyboard navigation in modal
     document.addEventListener('keydown', e => {
+      if (e.key === ' ' && state.subtitles.length > 0 && state.modalIdx < 0) {
+        e.preventDefault();
+        togglePlayback();
+        return;
+      }
       if (state.modalIdx < 0) return;
       if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -841,7 +1232,8 @@
       }
     });
 
-    // Register service worker
+    // ── Service Worker ──
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
